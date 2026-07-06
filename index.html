@@ -435,7 +435,7 @@ const GIDS = {
   restaurants: '1266147229'
 };
 function csvUrl(gid){
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&_=${Date.now()}`;
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&_=${Date.now()}`;
 }
 
 const DEFAULT_MAP_LINK = 'https://www.google.com/maps/d/edit?mid=1wuoBUmQ7xVI9zJ-BLr54-bCWeeQDWg8&usp=sharing';
@@ -560,11 +560,33 @@ function toObjects(rows){
       return obj;
     });
 }
+// Resilient field lookup: finds a column whose header CONTAINS the keyword,
+// so small edits to the sheet (adding ":", extra spaces, etc.) don't break parsing.
+function getVal(obj, keyword){
+  if(obj[keyword] !== undefined) return obj[keyword];
+  const key = Object.keys(obj).find(k => k.replace(/[:\s]/g,'') === keyword.replace(/[:\s]/g,''));
+  if(key) return obj[key];
+  const partial = Object.keys(obj).find(k => k.includes(keyword));
+  return partial ? obj[partial] : '';
+}
 async function fetchSheet(gid){
-  const res = await fetch(csvUrl(gid));
-  if(!res.ok) throw new Error('HTTP ' + res.status);
-  const text = await res.text();
-  return toObjects(parseCSV(text));
+  const urls = [
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&_=${Date.now()}`,
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}&_=${Date.now()}`
+  ];
+  let lastErr;
+  for(const url of urls){
+    try{
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('HTTP ' + res.status + ' — ' + url);
+      const text = await res.text();
+      if(!text || text.trim().length === 0) throw new Error('תגובה ריקה — ' + url);
+      return toObjects(parseCSV(text));
+    }catch(e){
+      lastErr = e;
+    }
+  }
+  throw lastErr;
 }
 
 // ============ FUZZY NAME MATCHING (for overlaying cost/hours) ============
@@ -599,25 +621,25 @@ function renderRouteAndDays(dayRows){
   let closingNote = null;
 
   dayRows.forEach(row => {
-    const yomRaw = row['יום'] || '';
+    const yomRaw = getVal(row, 'יום') || '';
     if(!yomRaw.trim()){
       // Rows with no day (e.g. a departure/closing note) go under the itinerary as a footer note.
-      if((row['תכנון'] || '').trim()) closingNote = row['תכנון'].trim();
+      if((getVal(row, 'תכנון') || '').trim()) closingNote = getVal(row, 'תכנון').trim();
       return;
     }
     const parts = yomRaw.split('\n').map(s => s.trim()).filter(Boolean);
     const weekday = parts[0] || '';
     const date = parts[1] || '';
     days.push({
-      region: row['אזור'] || '',
+      region: getVal(row, 'אזור') || '',
       weekday, date,
-      plan: (row['תכנון']||'').trim() || null,
-      cost: (row['מחיר']||'').trim(),
-      hours: (row['שעות פתיחה']||'').trim(),
-      address: (row['כתובת']||'').trim(),
-      site: (row['אתר']||'').trim(),
-      lodging: (row['לינה']||'').trim(),
-      extraNote: (row['הערות:']||row['הערות']||'').trim()
+      plan: (getVal(row, 'תכנון')||'').trim() || null,
+      cost: (getVal(row, 'מחיר')||'').trim(),
+      hours: (getVal(row, 'שעות פתיחה')||'').trim(),
+      address: (getVal(row, 'כתובת')||'').trim(),
+      site: (getVal(row, 'אתר')||'').trim(),
+      lodging: (getVal(row, 'לינה')||'').trim(),
+      extraNote: (getVal(row, 'הערות:')||getVal(row, 'הערות')||'').trim()
     });
   });
 
@@ -705,8 +727,8 @@ function renderRouteAndDays(dayRows){
 
 function renderMapAndAttractions(mapRows, attractionRows){
   // overall map / earth links — pulled from whichever row actually has them
-  const withMap = mapRows.find(r => (r['מפה של הכל']||'').trim());
-  const withEarth = mapRows.find(r => (r['GOOGLE EARTH']||'').trim());
+  const withMap = mapRows.find(r => (getVal(r, 'מפה של הכל')||'').trim());
+  const withEarth = mapRows.find(r => (getVal(r, 'GOOGLE EARTH')||'').trim());
   const mapLink = withMap ? withMap['מפה של הכל'].trim() : DEFAULT_MAP_LINK;
   const earthLink = withEarth ? withEarth['GOOGLE EARTH'].trim() : DEFAULT_EARTH_LINK;
   document.getElementById('mapFullLink').href = mapLink;
@@ -721,11 +743,11 @@ function renderMapAndAttractions(mapRows, attractionRows){
   const order = [];
   const groups = {};
   mapRows.forEach(row => {
-    const name = (row['מקום']||'').trim();
+    const name = (getVal(row, 'מקום')||'').trim();
     if(!name) return;
-    const cat = (row['קטגוריה']||'ללא קטגוריה').trim();
+    const cat = (getVal(row, 'קטגוריה')||'ללא קטגוריה').trim();
     if(!groups[cat]){ groups[cat] = []; order.push(cat); }
-    groups[cat].push({ name, place: (row['Place']||'').trim() });
+    groups[cat].push({ name, place: (getVal(row, 'Place')||'').trim() });
   });
 
   const catContainer = document.getElementById('categoriesContainer');
@@ -737,11 +759,11 @@ function renderMapAndAttractions(mapRows, attractionRows){
     const color = catColor(cat);
     const cardsHtml = items.map(it => {
       const bankRow = attractionRows.find(a =>
-        fuzzyMatch(a['אטרקציה'], it.name) || fuzzyMatch(a['אטרקציה'], it.place)
+        fuzzyMatch(getVal(a, 'אטרקציה'), it.name) || fuzzyMatch(getVal(a, 'אטרקציה'), it.place)
       );
-      const cost = bankRow ? [bankRow['עלות בין'], bankRow['עלות בשקלים']].filter(Boolean).join(' · ') : '';
-      const hours = bankRow ? (bankRow['שעות פתיחה']||'') : '';
-      const note = bankRow ? (bankRow['הערות']||'') : '';
+      const cost = bankRow ? [getVal(bankRow, 'עלות בין'), getVal(bankRow, 'עלות בשקלים')].filter(Boolean).join(' · ') : '';
+      const hours = bankRow ? (getVal(bankRow, 'שעות פתיחה')||'') : '';
+      const note = bankRow ? (getVal(bankRow, 'הערות')||'') : '';
       const pid = PID_BY_NAME[it.name] || PID_BY_NAME[it.place];
       const link = pid
         ? `https://www.google.com/maps/place/?q=place_id:${pid}`
@@ -768,7 +790,7 @@ function renderMapAndAttractions(mapRows, attractionRows){
 
 function renderRestaurants(rows){
   const section = document.getElementById('restaurants-section');
-  const valid = rows.filter(r => (r['שם']||'').trim());
+  const valid = rows.filter(r => (getVal(r, 'שם')||'').trim());
   if(!valid.length){
     section.querySelector('.dynamic-restaurants-area')?.remove();
     return;
@@ -777,14 +799,14 @@ function renderRestaurants(rows){
   wrap.className = 'cards-grid dynamic-restaurants-area';
   wrap.innerHTML = valid.map(r => `
     <div class="place-card" style="--cat-color:var(--gold)">
-      <div class="name">${r['שם']}</div>
+      <div class="name">${getVal(r, 'שם')}</div>
       <div class="meta-row">
-        ${r['אזור'] ? `<span class="tag">${r['אזור']}</span>` : ''}
-        ${r['שעות פתיחה'] ? `<span class="tag">${r['שעות פתיחה']}</span>` : ''}
+        ${getVal(r, 'אזור') ? `<span class="tag">${getVal(r, 'אזור')}</span>` : ''}
+        ${getVal(r, 'שעות פתיחה') ? `<span class="tag">${getVal(r, 'שעות פתיחה')}</span>` : ''}
       </div>
-      ${r['כתובת'] ? `<div class="note">${r['כתובת']}</div>` : ''}
-      ${r['הערות'] ? `<div class="note">${r['הערות']}</div>` : ''}
-      ${r['קישור'] ? `<a class="open-link" target="_blank" rel="noopener" href="${r['קישור']}">קישור ←</a>` : ''}
+      ${getVal(r, 'כתובת') ? `<div class="note">${getVal(r, 'כתובת')}</div>` : ''}
+      ${getVal(r, 'הערות') ? `<div class="note">${getVal(r, 'הערות')}</div>` : ''}
+      ${getVal(r, 'קישור') ? `<a class="open-link" target="_blank" rel="noopener" href="${getVal(r, 'קישור')}">קישור ←</a>` : ''}
     </div>
   `).join('');
   const emptyState = section.querySelector('.empty-state');
@@ -809,7 +831,7 @@ async function loadAll(){
     renderRestaurants(restaurants);
   }catch(e){
     errEl.style.display = 'block';
-    errEl.textContent = 'לא הצלחתי לטעון נתונים מהגיליון החי כרגע (ייתכן שהגיליון לא נגיש לציבור, או תקלת רשת). נסה לרענן, או ודא שהשיתוף מוגדר כ"כל מי שיש לו את הקישור – צפייה".';
+    errEl.textContent = 'לא הצלחתי לטעון נתונים מהגיליון החי: ' + (e && e.message ? e.message : e) + ' — נסה לרענן, או ודא שהשיתוף מוגדר כ"כל מי שיש לו את הקישור – צפייה".';
     console.error(e);
   }
 }
