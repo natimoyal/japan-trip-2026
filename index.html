@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>טיול משפחתי ליפן — ספטמבר–אוקטובר 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F7F3EA;
+    --cream-deep:#EFE9DA;
+    --ink:#2B2B2C;
+    --ink-soft:#5b5b57;
+    --indigo:#1F3A5F;
+    --indigo-tint:#3D5A80;
+    --fuji:#6E8AA0;
+    --vermilion:#C1440E;
+    --amber:#DD8B2E;
+    --moss:#5F7A5F;
+    --gold:#B8933E;
+    --line:#d8d0bd;
+    --radius:14px;
+    --shadow: 0 6px 24px rgba(43,43,44,0.08);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Assistant', sans-serif;
+    line-height:1.55;
+  }
+
+  h1,h2,h3,.serif{
+    font-family:'Frank Ruhl Libre', serif;
+    color:var(--ink);
+    margin:0;
+  }
+
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  a{ color:inherit; }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding: 64px 24px 40px;
+    max-width:1100px;
+    margin:0 auto;
+    text-align:center;
+  }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.12em;
+    font-size:0.78rem;
+    color:var(--vermilion);
+    text-transform:uppercase;
+    margin-bottom:14px;
+    display:inline-block;
+    border:1px solid var(--vermilion);
+    padding:4px 14px;
+    border-radius:999px;
+  }
+  .hero h1{
+    font-size:clamp(2.2rem, 5vw, 3.6rem);
+    font-weight:900;
+    line-height:1.15;
+    margin-bottom:10px;
+  }
+  .hero p.sub{
+    font-size:1.15rem;
+    color:var(--ink-soft);
+    font-weight:400;
+    margin-bottom:6px;
+  }
+  .hero .dates{
+    font-family:'JetBrains Mono', monospace;
+    font-size:1rem;
+    color:var(--ink);
+    background:var(--cream-deep);
+    display:inline-block;
+    padding:6px 18px;
+    border-radius:999px;
+    margin-top:12px;
+  }
+
+  /* ---------- ROUTE LINE (signature element) ---------- */
+  .route-wrap{
+    max-width:1200px;
+    margin:40px auto 60px;
+    padding:0 12px;
+  }
+  .route-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 18px;
+    justify-content:center;
+    margin-bottom:28px;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+  }
+  .route-legend span{ display:flex; align-items:center; gap:6px; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  .route-scroll{
+    overflow-x:auto;
+    padding-bottom:14px;
+  }
+  .route-line{
+    display:flex;
+    flex-direction:row;
+    align-items:flex-end;
+    min-width:max-content;
+    padding:0 20px;
+    gap:0;
+  }
+  .segment{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .segment-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+    white-space:nowrap;
+  }
+  .segment-track{ display:flex; align-items:center; }
+  .station{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-decoration:none;
+    color:inherit;
+    position:relative;
+  }
+  .station .node{
+    width:20px; height:20px;
+    border-radius:50%;
+    background:var(--cream);
+    border:3px solid var(--ink);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .station:hover .node, .station:focus-visible .node{
+    transform:scale(1.25);
+    box-shadow:0 0 0 4px rgba(43,43,44,0.08);
+  }
+  .station:focus-visible{ outline:2px solid var(--indigo); outline-offset:4px; border-radius:6px;}
+  .station .date-lbl{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.7rem;
+    color:var(--ink-soft);
+    margin-top:8px;
+    white-space:nowrap;
+  }
+  .track-line{
+    height:3px;
+    width:56px;
+    background:var(--ink);
+    opacity:.35;
+  }
+
+  /* ---------- SECTIONS ---------- */
+  section.block{
+    max-width:1100px;
+    margin:0 auto;
+    padding:20px 24px 70px;
+  }
+  .block-head{ margin-bottom:28px; text-align:center; }
+  .block-head .kicker{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.75rem;
+    letter-spacing:0.1em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  .block-head h2{
+    font-size:clamp(1.6rem,3.5vw,2.3rem);
+    font-weight:700;
+    margin-top:6px;
+  }
+
+  /* ---------- DAY CARDS ---------- */
+  .days{ display:flex; flex-direction:column; gap:16px; }
+  .day-card{
+    background:#fff;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px 26px;
+    display:grid;
+    grid-template-columns:120px 1fr;
+    gap:20px;
+    scroll-margin-top:24px;
+    border-right:5px solid var(--region-color, var(--indigo));
+  }
+  @media (max-width:640px){
+    .day-card{ grid-template-columns:1fr; }
+  }
+  .day-meta{ display:flex; flex-direction:column; gap:6px; }
+  .day-meta .daynum{
+    font-family:'JetBrains Mono', monospace;
+    font-size:1.6rem;
+    font-weight:700;
+    color:var(--region-color, var(--indigo));
+  }
+  .day-meta .weekday{
+    font-size:0.9rem;
+    color:var(--ink-soft);
+  }
+  .day-meta .region-tag{
+    align-self:flex-start;
+    font-size:0.72rem;
+    font-family:'JetBrains Mono', monospace;
+    background:var(--region-color, var(--indigo));
+    color:#fff;
+    padding:3px 10px;
+    border-radius:999px;
+    margin-top:4px;
+  }
+  .day-body{ display:flex; flex-direction:column; justify-content:center; }
+  .day-body .plan{ font-size:1rem; }
+  .day-body .plan.empty{ color:var(--ink-soft); font-style:italic; }
+  .day-body .note{
+    margin-top:8px;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    background:var(--cream-deep);
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:8px;
+    width:fit-content;
+  }
+
+  /* ---------- MAP ---------- */
+  .map-frame{
+    width:100%;
+    height:520px;
+    border:0;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  .map-actions{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    margin-top:16px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:'Assistant', sans-serif;
+    font-weight:700;
+    font-size:0.92rem;
+    padding:10px 22px;
+    border-radius:999px;
+    text-decoration:none;
+    display:inline-block;
+    transition:transform .12s ease, box-shadow .12s ease;
+    border:2px solid var(--ink);
+  }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(43,43,44,0.18); }
+  .btn:focus-visible{ outline:2px solid var(--indigo); outline-offset:3px; }
+  .btn.primary{ background:var(--ink); color:var(--cream); }
+  .btn.ghost{ background:transparent; color:var(--ink); }
+
+  /* ---------- ATTRACTIONS ---------- */
+  .category{ margin-bottom:44px; }
+  .category-title{
+    display:flex; align-items:center; gap:10px;
+    font-size:1.2rem;
+    font-weight:700;
+    margin-bottom:16px;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--line);
+  }
+  .cat-dot{ width:12px; height:12px; border-radius:50%; }
+  .cards-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px,1fr));
+    gap:14px;
+  }
+  .place-card{
+    background:#fff;
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    padding:16px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    border-top:4px solid var(--cat-color, var(--indigo));
+  }
+  .place-card .name{ font-weight:700; font-size:1.02rem; }
+  .place-card .meta-row{
+    font-size:0.82rem;
+    color:var(--ink-soft);
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .place-card .meta-row .tag{
+    background:var(--cream-deep);
+    padding:2px 8px;
+    border-radius:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.76rem;
+  }
+  .place-card .note{ font-size:0.82rem; color:var(--ink-soft); margin-top:2px; }
+  .place-card .open-link{
+    margin-top:8px;
+    font-size:0.82rem;
+    font-weight:700;
+    color:var(--indigo);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    width:fit-content;
+  }
+  .place-card .open-link:hover{ text-decoration:underline; }
+
+  /* ---------- RESTAURANTS ---------- */
+  .empty-state{
+    background:#fff;
+    border:2px dashed var(--line);
+    border-radius:var(--radius);
+    padding:34px 24px;
+    text-align:center;
+    color:var(--ink-soft);
+  }
+  .empty-state strong{ color:var(--ink); display:block; margin-bottom:6px; font-family:'Frank Ruhl Libre',serif; font-size:1.15rem; }
+
+  footer{
+    text-align:center;
+    padding:30px 20px 60px;
+    color:var(--ink-soft);
+    font-size:0.82rem;
+  }
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <span class="eyebrow">מסלול משפחתי · 15 ימים</span>
+    <h1>טיול יפן</h1>
+    <p class="sub">טוקיו · הר פוג'י · קיוטו · אוסקה — ובחזרה</p>
+    <div class="dates">25.09.2026 → 09.10.2026</div>
+  </div>
+
+  <div class="route-wrap">
+    <div class="route-legend">
+      <span><i class="dot" style="background:var(--indigo)"></i> טוקיו</span>
+      <span><i class="dot" style="background:var(--fuji)"></i> פוג'י</span>
+      <span><i class="dot" style="background:var(--vermilion)"></i> קיוטו</span>
+      <span><i class="dot" style="background:var(--amber)"></i> אוסקה</span>
+    </div>
+    <div class="route-scroll">
+      <div class="route-line" id="routeLine"></div>
+    </div>
+  </div>
+
+  <section class="block" id="days-section">
+    <div class="block-head">
+      <div class="kicker">Day by day</div>
+      <h2>המסלול לפי ימים</h2>
+    </div>
+    <div class="days" id="daysContainer"></div>
+  </section>
+
+  <section class="block" id="map-section">
+    <div class="block-head">
+      <div class="kicker">The Map</div>
+      <h2>כל המקומות על מפה אחת</h2>
+    </div>
+    <iframe class="map-frame" loading="lazy"
+      src="https://www.google.com/maps/d/embed?mid=1wuoBUmQ7xVI9zJ-BLr54-bCWeeQDWg8"></iframe>
+    <div class="map-actions">
+      <a class="btn primary" target="_blank" rel="noopener"
+        href="https://www.google.com/maps/d/edit?mid=1wuoBUmQ7xVI9zJ-BLr54-bCWeeQDWg8&usp=sharing">פתיחה במסך מלא</a>
+      <a class="btn ghost" target="_blank" rel="noopener"
+        href="https://earth.google.com/web/@35.5079445,136.10245299,374.32185309a,786079.14289207d,35y,0h,0t,0r/data=CgRCAggBMigKJgokCiAxd3VvQlVtUTd4Vkk5ekotQkxyNTQtYkNXZWVRRFdnOCACOgMKATBCAggASggI36fGsgQQAQ?authuser=0&utm_source=mymaps">פתיחה ב-Google Earth</a>
+    </div>
+  </section>
+
+  <section class="block" id="attractions-section">
+    <div class="block-head">
+      <div class="kicker">Attractions bank</div>
+      <h2>בנק אטרקציות</h2>
+    </div>
+    <div id="categoriesContainer"></div>
+  </section>
+
+  <section class="block" id="restaurants-section">
+    <div class="block-head">
+      <div class="kicker">Where to eat</div>
+      <h2>מסעדות מומלצות</h2>
+    </div>
+    <div class="empty-state">
+      <strong>עוד לא נוספו מסעדות</strong>
+      זה המקום שיתמלא כשתמצאו המלצות — כל שורה חדשה בגיליון "מסעדות מומלצות" תופיע כאן אוטומטית בעדכון הבא.
+    </div>
+  </section>
+
+  <footer>נבנה עבור הטיול המשפחתי ליפן · ספטמבר–אוקטובר 2026</footer>
+
+<script>
+const REGION_COLORS = {
+  'טוקיו':'var(--indigo)',
+  'פוג\'י':'var(--fuji)',
+  'קיוטו':'var(--vermilion)',
+  'אוסקה':'var(--amber)'
+};
+
+const days = [
+  {n:1, date:'25/09', weekday:'יום שישי', region:'טוקיו', plan:"נחיתה בטוקיו בשעה 12:45 בשדה תעופה נאריטה", note:null},
+  {n:2, date:'26/09', weekday:'יום שבת', region:'טוקיו', plan:null, note:null},
+  {n:3, date:'27/09', weekday:'יום ראשון', region:'טוקיו', plan:null, note:null},
+  {n:4, date:'28/09', weekday:'יום שני', region:'טוקיו → פוג\'י', plan:null, note:'יום מעבר לאזור פוג\'י'},
+  {n:5, date:'29/09', weekday:'יום שלישי', region:'פוג\'י', plan:null, note:null},
+  {n:6, date:'30/09', weekday:'יום רביעי', region:'פוג\'י → קיוטו', plan:null, note:'יום מעבר לקיוטו'},
+  {n:7, date:'01/10', weekday:'יום חמישי', region:'קיוטו', plan:null, note:null},
+  {n:8, date:'02/10', weekday:'יום שישי', region:'קיוטו', plan:null, note:null},
+  {n:9, date:'03/10', weekday:'יום שבת', region:'קיוטו', plan:null, note:null},
+  {n:10, date:'04/10', weekday:'יום ראשון', region:'אוסקה', plan:'נארה', note:null},
+  {n:11, date:'05/10', weekday:'יום שני', region:'אוסקה', plan:'יוניברסל', note:null},
+  {n:12, date:'06/10', weekday:'יום שלישי', region:'אוסקה → טוקיו', plan:null, note:'יום מעבר חזרה לטוקיו'},
+  {n:13, date:'07/10', weekday:'יום רביעי', region:'טוקיו', plan:null, note:null},
+  {n:14, date:'08/10', weekday:'יום חמישי', region:'טוקיו', plan:null, note:null},
+  {n:15, date:'09/10', weekday:'יום שישי', region:'טוקיו', plan:null, note:'המראה בשעה 18:00 משדה התעופה נאריטה'},
+];
+
+const HEX = { indigo:'#1F3A5F', fuji:'#6E8AA0', vermilion:'#C1440E', amber:'#DD8B2E' };
+function regionKey(region){
+  if(region.includes('אוסקה')) return 'amber';
+  if(region.includes('קיוטו')) return 'vermilion';
+  if(region.includes('פוג')) return 'fuji';
+  return 'indigo';
+}
+function regionColor(region){ return `var(--${regionKey(region)})`; }
+function regionHex(region){ return HEX[regionKey(region)]; }
+
+// ---- Render route line ----
+const routeLine = document.getElementById('routeLine');
+let lastRegion = null;
+let segmentEl = null;
+days.forEach((d, i) => {
+  const baseRegion = d.region.split(' →')[0].split(' ')[0];
+  if(baseRegion !== lastRegion){
+    segmentEl = document.createElement('div');
+    segmentEl.className = 'segment';
+    const label = document.createElement('div');
+    label.className = 'segment-label';
+    label.textContent = d.region;
+    segmentEl.appendChild(label);
+    const track = document.createElement('div');
+    track.className = 'segment-track';
+    segmentEl.appendChild(track);
+    routeLine.appendChild(segmentEl);
+    lastRegion = baseRegion;
+  }
+  const track = segmentEl.querySelector('.segment-track');
+  if(track.children.length > 0){
+    const connector = document.createElement('div');
+    connector.className = 'track-line';
+    connector.style.background = regionHex(d.region);
+    track.appendChild(connector);
+  }
+  const station = document.createElement('a');
+  station.className = 'station';
+  station.href = '#day-' + d.n;
+  station.title = d.weekday + ' ' + d.date;
+  const node = document.createElement('div');
+  node.className = 'node';
+  node.style.borderColor = regionColor(d.region);
+  station.appendChild(node);
+  const dateLbl = document.createElement('div');
+  dateLbl.className = 'date-lbl';
+  dateLbl.textContent = d.date;
+  station.appendChild(dateLbl);
+  track.appendChild(station);
+});
+
+// ---- Render day cards ----
+const daysContainer = document.getElementById('daysContainer');
+days.forEach(d => {
+  const card = document.createElement('div');
+  card.className = 'day-card';
+  card.id = 'day-' + d.n;
+  card.style.setProperty('--region-color', regionColor(d.region));
+  card.innerHTML = `
+    <div class="day-meta">
+      <div class="daynum">${d.date}</div>
+      <div class="weekday">${d.weekday}</div>
+      <div class="region-tag">${d.region}</div>
+    </div>
+    <div class="day-body">
+      <div class="plan ${d.plan ? '' : 'empty'}">${d.plan ? d.plan : 'עדיין לא תוכנן — מקום פנוי לתכנון'}</div>
+      ${d.note ? `<div class="note">${d.note}</div>` : ''}
+    </div>
+  `;
+  daysContainer.appendChild(card);
+});
+
+// ---- Attractions data ----
+const categories = [
+  { name:'מחוז טוקיו', color:'var(--indigo)', items:[
+    {name:'שיבויה', place:'Shibuya', pid:'ChIJ0Qgx67KMGGARd2ZbObLZHPE'},
+    {name:'שינג\'וקו', place:'Shinjuku City', pid:'ChIJS_23WSCNGGAR0u8y4o_GYew'},
+    {name:'אסאקוסה', place:'Asakusa', pid:'ChIJM1N_BMKOGGARZ0DHgTj9hHw'},
+    {name:'גינזה', place:'Ginza', pid:'ChIJu2-DAeeLGGARUZipC7OFRmA'},
+    {name:'אואנו', place:'Ueno', pid:'ChIJs-soi56OGGARvvSyPcqIups'},
+    {name:'אקייהאברה', place:'Akihabara Electric Town', pid:'ChIJzdWdgh2MGGARh4kg2pVZL3c'},
+    {name:'האראג\'וקו', place:'Harajuku', pid:'ChIJ5V1T5KKMGGARlTLiBrjIGUg'},
+    {name:'אומטסנדו', place:'Omote-Sando Avenue', pid:'ChIJSTdtYqGMGGAR3XD4H-GfStY'},
+    {name:'נקאמגורו', place:'Nakameguro', pid:'ChIJAas2LziLGGAROimsxcM_Rqo'},
+    {name:'דאיקניאמה', place:'Daikanyamacho', pid:'ChIJ68vK5kSLGGARoiBaKr3YZgU'},
+    {name:'אודאיבה', place:'Odaiba', pid:'ChIJy9RVLPiJGGARuRAgHSGL_nk'},
+    {name:'אייביקובו', place:'Ikebukuro', pid:'ChIJJ1xYpaCSGGARumLc8TmsILQ'},
+  ]},
+  { name:'אטרקציות בטוקיו', color:'var(--indigo)', items:[
+    {name:'TeamLab Planets', place:'teamLab Planets TOKYO DMM', pid:'ChIJSeco5wiJGGARItbTS8lQ5G0', cost:'¥15,200 (₪282.59)', hours:'08:30–20:30', note:'יש גם בקיוטו — לא שווה ללכת לשניהם'},
+    {name:'Shibuya Sky', place:'Shibuya Sky', pid:'ChIJ4Rr2JWiLGGARcyRSHuZ-9G8', hours:'10:00–22:30'},
+    {name:'דיסנילנד טוקיו', place:'Tokyo Disneyland', pid:'ChIJszdHEQN9GGARy9MJ1TY22eQ'},
+    {name:'דיסני-סי טוקיו', place:'Tokyo DisneySea', pid:'ChIJszdHEQN9GGARJS23SnAdR0E'},
+    {name:'מוזיאון ג\'יבלי', place:'Ghibli Museum', pid:'ChIJLYwD5TTuGGARBZKEP5BV4U0', cost:'¥1,000 (₪18.59)', hours:'10:00–18:00', note:'ההרשמה נפתחת ב-10 לכל חודש בשעה 10:00 (שעון יפן) לחודש הבא'},
+    {name:'עץ השמים (סקייטרי)', place:'Tokyo Skytree', pid:'ChIJ35ov0dCOGGARKvdDH7NPHX0'},
+    {name:'פסל גונדאם (אודאיבה)', place:'Unicorn Gundam Statue', pid:'ChIJF6xTyvmJGGARU8t5NIqkNeI'},
+    {name:'מרכז פוקימון', place:'Pokemon Center Shibuya', pid:'ChIJ313pNISNGGARmnrx-nT6xR4'},
+    {name:'שוק טסוקיג\'י החיצוני', place:'Tsukiji Outer Market', pid:'ChIJW2cLzSGLGGARXAKXv6EkbqI'},
+  ]},
+  { name:'טיולי יום מטוקיו', color:'var(--fuji)', items:[
+    {name:'האקונה', place:'Hakone', pid:'ChIJe9yyYAyiGWARJnuXrBe9BSY'},
+    {name:'אזור הר פוג\'י', place:'Fuji Five Lakes', pid:'ChIJwdemCVNnGWARps2x6KVUvRo'},
+    {name:'קמקורה', place:'Kamakura', pid:'ChIJGVasgJtFGGARAiWfOXp0AFc'},
+    {name:'ניקו', place:'Nikko', pid:'ChIJ0ciaxrekH2ARwNEdlkJrUm8'},
+    {name:'יוקוהאמה', place:'Yokohama', pid:'ChIJCWW2u-xbGGARAFQoYPaDlgY'},
+    {name:'קוואגוצ\'ו', place:'Fujikawaguchiko', pid:'ChIJGyRHiGvgG2ARRmIMgHRWc1w'},
+    {name:'אנושימה', place:'Enoshima', pid:'ChIJpQqJoOZOGGAR7FpKUYhZ_gQ'},
+  ]},
+  { name:'קיוטו', color:'var(--vermilion)', items:[
+    {name:'מקדש פושימי אינארי', place:'Fushimi Inari Taisha', pid:'ChIJIW0uPRUPAWAR6eI6dRzKGns'},
+    {name:'קינקאקו-ג\'י (המקדש המוזהב)', place:'Kinkaku-ji', pid:'ChIJvUbrwCCoAWARX2QiHCsn5A4'},
+    {name:'קימיזו-דרה', place:'Kiyomizu-dera', pid:'ChIJB_vchdMIAWARujTEUIZlr2I'},
+    {name:'יער הבמבוק באראשייאמה', place:'Arashiyama Bamboo Forest', pid:'ChIJrYtcv-urAWAR3XzWvXv8n_s'},
+    {name:'רובע גיון', place:'Gion', pid:'ChIJZ3vGwcMIAWARtO-YE6oEyw0'},
+    {name:'טירת ניג\'ו', place:'Nijō Castle', pid:'ChIJC5srCtQHAWARLy9qkFmHaxA'},
+    {name:'שביל הפילוסוף', place:'Tetsugaku No Michi', pid:'ChIJC1iQcQQJAWARJ1jqp_e7tLU'},
+    {name:'מקדש הייאן', place:'Heian-jingū Shrine', pid:'ChIJjch8GOUIAWART0WX2JLZvnU'},
+  ]},
+  { name:'אוסקה', color:'var(--amber)', items:[
+    {name:'דותונבורי', place:'Dotonbori', pid:'ChIJg2DcJhXnAGARCbeAHoZrPeQ'},
+    {name:'טירת אוסקה', place:'Osaka Castle', pid:'ChIJ_TooXM3gAGARQR6hXH3QAQ8'},
+    {name:'שוק קורומון', place:'Kuromon Market', pid:'ChIJXSJB5UHnAGARQcEjvngsHaw'},
+    {name:'שינסקיי', place:'Shinsekai', pid:'ChIJV6JXdmDnAGAR-9a4atjXsTY'},
+    {name:'מגדל צוטנקאקו', place:'Tsutenkaku', pid:'ChIJ_0Lgd2DnAGARV0X03lbPy-U'},
+    {name:'בניין אומדה סקי', place:'Umeda Sky Building', pid:'ChIJbyd0kIjmAGAR_crecCbjwlc'},
+    {name:'הורקאו', place:'Horie District', pid:'ChIJN7-3DwfnAGARX9-31NWYQ54'},
+    {name:'נמבה', place:'Namba', pid:'ChIJOXPJyWznAGARahb0KWFRjlM'},
+  ]},
+  { name:'טיולי יום מקיוטו / אוסקה', color:'var(--moss)', items:[
+    {name:'נארה', place:'Nara Park', pid:'ChIJYWCMvZY5AWARVnREV_OsbPk'},
+    {name:'קובה', place:'Kobe', pid:'ChIJ2YntKoF9AGAR9HD2wgZhEsc'},
+    {name:'הירושימה', place:'Peace Memorial Park - Hiroshima', pid:'ChIJgzAzVG2iWjURZRZ1udXOKeE'},
+    {name:'מיאג\'ימה', place:'Itsukushima Jinja', pid:'ChIJj23HfgTjGmARkNW10PcocjU'},
+    {name:'טירת הימג\'י', place:'Himeji Castle', pid:'ChIJsyQzogPgVDURsYG6bi-MT3o'},
+    {name:'אוג\'י', place:'Uji', pid:'ChIJ7VMo54QRAWAR3t1BYKpGatY'},
+    {name:'נאשימה', place:'Naoshima Island', pid:'ChIJncpVz9LxUzUR2Sszh-LRUfw'},
+    {name:'אראשייאמה', place:'Arashiyama', pid:'ChIJ49PvUVQHAWARTAF7WU_Wqqs'},
+  ]},
+  { name:'פנינים נסתרות', color:'var(--gold)', items:[
+    {name:'עמק קיסו (מגומה וטסומאגו)', place:'Kiso Valley', pid:'ChIJTdVxgQPEHGARqNwMkjgJxC8'},
+    {name:'טאקאיומה', place:'Takayama Old Town', pid:'ChIJsTyzQIy7AmARLiOSzcZFfRs'},
+    {name:'שיראקאווה-גו', place:'Shirakawa', pid:'ChIJf8xDSH5w-F8Rc3Fh1EQ1BFY'},
+    {name:'כפר הדייגים טאקאיומה', place:'Hida no Sato Folk Village Museum', pid:'ChIJmWTYrzm7AmARRPwmwmCypNY'},
+    {name:'קנאזאווה', place:'Kanazawa', pid:'ChIJw2aFRlU2-F8RFWLeb8RV8Y0'},
+    {name:'אושיקה אלט גירד', place:'Ashikaga Flower Park', pid:'ChIJ0-3eEKkkH2ARQ8C5Jl8PGmM'},
+    {name:'ניקו', place:'Nikko', pid:'ChIJ0ciaxrekH2ARwNEdlkJrUm8'},
+    {name:'אגמון קוואגוצ\'י', place:'Lake Kawaguchi', pid:'ChIJTz8EpbRfGWARR30zHkuyyyk'},
+  ]},
+];
+
+const catContainer = document.getElementById('categoriesContainer');
+categories.forEach(cat => {
+  const catEl = document.createElement('div');
+  catEl.className = 'category';
+  const grid = cat.items.map(it => `
+    <div class="place-card" style="--cat-color:${cat.color}">
+      <div class="name">${it.name}</div>
+      <div class="meta-row">
+        ${it.cost ? `<span class="tag">${it.cost}</span>` : ''}
+        ${it.hours ? `<span class="tag">${it.hours}</span>` : ''}
+      </div>
+      ${it.note ? `<div class="note">${it.note}</div>` : ''}
+      <a class="open-link" target="_blank" rel="noopener"
+         href="https://www.google.com/maps/place/?q=place_id:${it.pid}">פתיחה במפות ←</a>
+    </div>
+  `).join('');
+  catEl.innerHTML = `
+    <div class="category-title"><span class="cat-dot" style="background:${cat.color}"></span>${cat.name}</div>
+    <div class="cards-grid">${grid}</div>
+  `;
+  catContainer.appendChild(catEl);
+});
+</script>
+</body>
+</html>
