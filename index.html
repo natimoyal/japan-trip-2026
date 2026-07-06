@@ -354,6 +354,40 @@
     color:var(--ink-soft);
     font-size:0.82rem;
   }
+
+  /* ---------- MOBILE ---------- */
+  @media (max-width:520px){
+    .hero{ padding:36px 14px 24px; }
+    .family-photo{ width:120px; height:120px; margin-bottom:14px; border-width:3px; }
+    .hero .eyebrow{ font-size:0.68rem; padding:3px 10px; margin-bottom:10px; }
+    .hero h1{ font-size:1.7rem; margin-bottom:6px; }
+    .hero p.sub{ font-size:0.92rem; }
+    .hero .dates{ font-size:0.85rem; padding:5px 14px; }
+
+    .route-wrap{ margin:22px auto 32px; padding:0; }
+    .route-legend{ font-size:0.72rem; gap:6px 12px; padding:0 12px; }
+    .route-scroll{ -webkit-overflow-scrolling:touch; }
+    .route-line{ padding:0 16px; }
+    .segment-label{ font-size:0.62rem; }
+    .track-line{ width:30px; }
+    .station .node{ width:16px; height:16px; }
+    .station .date-lbl{ font-size:0.6rem; }
+
+    section.block{ padding:14px 14px 44px; }
+    .block-head{ margin-bottom:20px; }
+    .block-head h2{ font-size:1.4rem; }
+
+    .day-card{ padding:16px 16px; gap:12px; }
+    .day-meta .daynum{ font-size:1.3rem; }
+    .day-meta .region-tag{ font-size:0.66rem; }
+
+    .cards-grid{ grid-template-columns:1fr; gap:10px; }
+    .place-card{ padding:14px 16px; }
+
+    .map-frame{ height:340px; }
+    .map-actions{ flex-direction:column; align-items:stretch; }
+    .map-actions .btn{ text-align:center; }
+  }
 </style>
 </head>
 <body>
@@ -647,7 +681,17 @@ function renderRouteAndDays(dayRows){
   // hero
   document.getElementById('dayCountLabel').textContent = `מסלול משפחתי · ${days.length} ימים`;
   if(days.length){
-    document.getElementById('datesLabel').textContent = `${days[0].date} → ${days[days.length-1].date}`;
+    function dateKey(dateStr){
+      const parts = (dateStr||'').split('/').map(n => parseInt(n,10));
+      const day = parts[0]||0, month = parts[1]||0;
+      return month*100 + day;
+    }
+    let first = days[0], last = days[0];
+    days.forEach(d => {
+      if(dateKey(d.date) < dateKey(first.date)) first = d;
+      if(dateKey(d.date) > dateKey(last.date)) last = d;
+    });
+    document.getElementById('datesLabel').textContent = `${first.date} → ${last.date}`;
   }
 
   // route line
@@ -698,7 +742,7 @@ function renderRouteAndDays(dayRows){
     const tags = [];
     if(d.cost) tags.push(`<span class="tag">💴 ${d.cost}</span>`);
     if(d.hours) tags.push(`<span class="tag">🕐 ${d.hours}</span>`);
-    if(d.address) tags.push(`<span class="tag">📍 ${d.address}</span>`);
+    if(d.address) tags.push(`<a class="tag" href="${addressToMapsLink(d.address)}" target="_blank" rel="noopener">📍 ${d.address}</a>`);
     if(d.lodging) tags.push(`<span class="tag">🛏 ${d.lodging}</span>`);
     if(d.site) tags.push(`<a class="tag" href="${d.site}" target="_blank" rel="noopener">🔗 אתר</a>`);
     const isTransit = d.region.includes('>') || d.region.includes('→');
@@ -807,6 +851,14 @@ function fixMapsLink(url){
   return url;
 }
 
+// Turns a plain address string into a clickable Google Maps search link.
+// If the text is already a URL (someone pasted a link into the "כתובת" cell), fix it instead of double-wrapping.
+function addressToMapsLink(text){
+  if(!text) return '';
+  if(/^https?:\/\//i.test(text)) return fixMapsLink(text);
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}`;
+}
+
 function renderRestaurants(rows){
   const section = document.getElementById('restaurants-section');
   const valid = rows.filter(r => (getVal(r, 'שם')||'').trim());
@@ -823,7 +875,7 @@ function renderRestaurants(rows){
         ${getVal(r, 'אזור') ? `<span class="tag">${getVal(r, 'אזור')}</span>` : ''}
         ${getVal(r, 'שעות פתיחה') ? `<span class="tag">${getVal(r, 'שעות פתיחה')}</span>` : ''}
       </div>
-      ${getVal(r, 'כתובת') ? `<div class="note">${getVal(r, 'כתובת')}</div>` : ''}
+      ${getVal(r, 'כתובת') ? `<a class="note" style="display:block;text-decoration:none;" target="_blank" rel="noopener" href="${addressToMapsLink(getVal(r, 'כתובת'))}">📍 ${getVal(r, 'כתובת')}</a>` : ''}
       ${getVal(r, 'הערות') ? `<div class="note">${getVal(r, 'הערות')}</div>` : ''}
       ${getVal(r, 'קישור') ? `<a class="open-link" target="_blank" rel="noopener" href="${fixMapsLink(getVal(r, 'קישור'))}">קישור ←</a>` : ''}
     </div>
