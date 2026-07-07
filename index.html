@@ -750,32 +750,60 @@ function renderRouteAndDays(dayRows){
     track.appendChild(station);
   });
 
-  // day cards
+  // day cards — grouped into collapsible sections by region (same regionKey used for the route line)
+  const REGION_LABELS = { indigo:'טוקיו', fuji:"הר פוג'י", vermilion:'קיוטו', amber:'אוסקה' };
+  let dayGroups = [];
   days.forEach((d, i) => {
-    const card = document.createElement('div');
-    card.className = 'day-card';
-    card.id = 'day-' + i;
-    card.style.setProperty('--region-color', regionColor(d.region));
-    const tags = [];
-    if(d.cost) tags.push(`<span class="tag">💴 ${d.cost}</span>`);
-    if(d.hours) tags.push(`<span class="tag">🕐 ${d.hours}</span>`);
-    if(d.address) tags.push(`<a class="tag" href="${addressToMapsLink(d.address)}" target="_blank" rel="noopener">📍 ${d.address}</a>`);
-    if(d.lodging) tags.push(`<span class="tag">🛏 ${d.lodging}</span>`);
-    if(d.site) tags.push(`<a class="tag" href="${d.site}" target="_blank" rel="noopener">🔗 אתר</a>`);
-    const isTransit = d.region.includes('>') || d.region.includes('→');
-    card.innerHTML = `
-      <div class="day-meta">
-        <div class="daynum">${d.date}</div>
-        <div class="weekday">${d.weekday}</div>
-        <div class="region-tag">${d.region}</div>
-      </div>
-      <div class="day-body">
-        <div class="plan ${d.plan ? '' : 'empty'}">${d.plan ? d.plan : (isTransit ? 'יום מעבר' : 'עדיין לא תוכנן — מקום פנוי לתכנון')}</div>
-        ${tags.length ? `<div class="meta-row" style="margin-top:8px;">${tags.join('')}</div>` : ''}
-        ${d.extraNote ? `<div class="note">${d.extraNote}</div>` : ''}
+    const rk = regionKey(d.region);
+    const last = dayGroups[dayGroups.length - 1];
+    if(!last || last.key !== rk){
+      dayGroups.push({ key: rk, label: REGION_LABELS[rk] || d.region, items: [] });
+    }
+    dayGroups[dayGroups.length - 1].items.push({ ...d, index: i });
+  });
+
+  dayGroups.forEach(group => {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'category';
+    const color = `var(--${group.key})`;
+    const cardsHtml = group.items.map(d => {
+      const tags = [];
+      if(d.cost) tags.push(`<span class="tag">💴 ${d.cost}</span>`);
+      if(d.hours) tags.push(`<span class="tag">🕐 ${d.hours}</span>`);
+      if(d.address) tags.push(`<a class="tag" href="${addressToMapsLink(d.address)}" target="_blank" rel="noopener">📍 ${d.address}</a>`);
+      if(d.lodging) tags.push(`<span class="tag">🛏 ${d.lodging}</span>`);
+      if(d.site) tags.push(`<a class="tag" href="${d.site}" target="_blank" rel="noopener">🔗 אתר</a>`);
+      const isTransit = d.region.includes('>') || d.region.includes('→');
+      return `
+        <div class="day-card" id="day-${d.index}" style="--region-color:${regionColor(d.region)}">
+          <div class="day-meta">
+            <div class="daynum">${d.date}</div>
+            <div class="weekday">${d.weekday}</div>
+            <div class="region-tag">${d.region}</div>
+          </div>
+          <div class="day-body">
+            <div class="plan ${d.plan ? '' : 'empty'}">${d.plan ? d.plan : (isTransit ? 'יום מעבר' : 'עדיין לא תוכנן — מקום פנוי לתכנון')}</div>
+            ${tags.length ? `<div class="meta-row" style="margin-top:8px;">${tags.join('')}</div>` : ''}
+            ${d.extraNote ? `<div class="note">${d.extraNote}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+    groupEl.innerHTML = `
+      <button type="button" class="category-title" aria-expanded="false">
+        <span class="cat-dot" style="background:${color}"></span>${group.label} · ${group.items.length} ימים
+        <span class="chev">▾</span>
+      </button>
+      <div class="category-body">
+        <div class="days">${cardsHtml}</div>
       </div>
     `;
-    daysContainer.appendChild(card);
+    const titleBtn = groupEl.querySelector('.category-title');
+    titleBtn.addEventListener('click', () => {
+      const isOpen = groupEl.classList.toggle('is-open');
+      titleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    daysContainer.appendChild(groupEl);
   });
 
   if(closingNote){
@@ -786,6 +814,24 @@ function renderRouteAndDays(dayRows){
     daysContainer.appendChild(note);
   }
 }
+
+// Clicking a route-line station expands the day's group (if collapsed) before scrolling to it.
+document.addEventListener('click', function(e){
+  const link = e.target.closest('.station');
+  if(!link) return;
+  const id = link.getAttribute('href');
+  if(!id || !id.startsWith('#')) return;
+  const target = document.querySelector(id);
+  if(!target) return;
+  e.preventDefault();
+  const group = target.closest('.category');
+  if(group && !group.classList.contains('is-open')){
+    group.classList.add('is-open');
+    const btn = group.querySelector('.category-title');
+    if(btn) btn.setAttribute('aria-expanded', 'true');
+  }
+  requestAnimationFrame(() => target.scrollIntoView({ behavior:'smooth', block:'center' }));
+});
 
 function renderMapAndAttractions(mapRows, attractionRows){
   // overall map / earth links — pulled from whichever row actually has them
@@ -889,24 +935,51 @@ function addressToMapsLink(text){
 function renderRestaurants(rows){
   const section = document.getElementById('restaurants-section');
   const valid = rows.filter(r => (getVal(r, 'שם')||'').trim());
-  if(!valid.length){
-    section.querySelector('.dynamic-restaurants-area')?.remove();
-    return;
-  }
+  const oldWrap = section.querySelector('.dynamic-restaurants-area');
+  if(oldWrap) oldWrap.remove();
+  if(!valid.length) return;
+
+  const order = [];
+  const groups = {};
+  valid.forEach(r => {
+    const region = (getVal(r, 'אזור')||'ללא אזור').trim() || 'ללא אזור';
+    if(!groups[region]){ groups[region] = []; order.push(region); }
+    groups[region].push(r);
+  });
+
   const wrap = document.createElement('div');
-  wrap.className = 'cards-grid dynamic-restaurants-area';
-  wrap.innerHTML = valid.map(r => `
-    <div class="place-card" style="--cat-color:var(--gold)">
-      <div class="name">${getVal(r, 'שם')}</div>
-      <div class="meta-row">
-        ${getVal(r, 'אזור') ? `<span class="tag">${getVal(r, 'אזור')}</span>` : ''}
-        ${getVal(r, 'שעות פתיחה') ? `<span class="tag">${getVal(r, 'שעות פתיחה')}</span>` : ''}
+  wrap.className = 'dynamic-restaurants-area';
+  order.forEach(region => {
+    const items = groups[region];
+    const color = regionColor(region);
+    const catEl = document.createElement('div');
+    catEl.className = 'category';
+    const cardsHtml = items.map(r => `
+      <div class="place-card" style="--cat-color:${color}">
+        <div class="name">${getVal(r, 'שם')}</div>
+        ${getVal(r, 'שעות פתיחה') ? `<div class="meta-row"><span class="tag">${getVal(r, 'שעות פתיחה')}</span></div>` : ''}
+        ${getVal(r, 'כתובת') ? `<a class="note" style="display:block;text-decoration:none;" target="_blank" rel="noopener" href="${addressToMapsLink(getVal(r, 'כתובת'))}">📍 ${getVal(r, 'כתובת')}</a>` : ''}
+        ${getVal(r, 'הערות') ? `<div class="note">${getVal(r, 'הערות')}</div>` : ''}
+        ${getVal(r, 'קישור') ? `<a class="open-link" target="_blank" rel="noopener" href="${fixMapsLink(getVal(r, 'קישור'))}">קישור ←</a>` : ''}
       </div>
-      ${getVal(r, 'כתובת') ? `<a class="note" style="display:block;text-decoration:none;" target="_blank" rel="noopener" href="${addressToMapsLink(getVal(r, 'כתובת'))}">📍 ${getVal(r, 'כתובת')}</a>` : ''}
-      ${getVal(r, 'הערות') ? `<div class="note">${getVal(r, 'הערות')}</div>` : ''}
-      ${getVal(r, 'קישור') ? `<a class="open-link" target="_blank" rel="noopener" href="${fixMapsLink(getVal(r, 'קישור'))}">קישור ←</a>` : ''}
-    </div>
-  `).join('');
+    `).join('');
+    catEl.innerHTML = `
+      <button type="button" class="category-title" aria-expanded="false">
+        <span class="cat-dot" style="background:${color}"></span>${region} · ${items.length}
+        <span class="chev">▾</span>
+      </button>
+      <div class="category-body">
+        <div class="cards-grid">${cardsHtml}</div>
+      </div>
+    `;
+    const titleBtn = catEl.querySelector('.category-title');
+    titleBtn.addEventListener('click', () => {
+      const isOpen = catEl.classList.toggle('is-open');
+      titleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    wrap.appendChild(catEl);
+  });
+
   const emptyState = section.querySelector('.empty-state');
   if(emptyState) emptyState.remove();
   section.appendChild(wrap);
