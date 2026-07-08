@@ -241,6 +241,8 @@
   .day-body{ display:flex; flex-direction:column; justify-content:center; }
   .day-body .plan{ font-size:1rem; }
   .day-body .plan.empty{ color:var(--ink-soft); font-style:italic; }
+  .plan-item{ padding:6px 0; }
+  .plan-item + .plan-item{ border-top:1px solid var(--line); margin-top:6px; }
   .day-body .note{
     margin-top:8px;
     font-size:0.85rem;
@@ -670,29 +672,44 @@ function renderRouteAndDays(dayRows){
   daysContainer.innerHTML = '';
 
   const days = [];
-  let closingNote = null;
 
   dayRows.forEach(row => {
     const yomRaw = getVal(row, 'יום') || '';
-    if(!yomRaw.trim()){
-      // Rows with no day (e.g. a departure/closing note) go under the itinerary as a footer note.
-      if((getVal(row, 'תכנון') || '').trim()) closingNote = getVal(row, 'תכנון').trim();
-      return;
-    }
+    const regionRaw = (getVal(row, 'אזור') || '').trim();
+    const planText = (getVal(row, 'תכנון') || '').trim();
     const parts = yomRaw.split('\n').map(s => s.trim()).filter(Boolean);
     const weekday = parts[0] || '';
     const date = parts[1] || '';
-    days.push({
-      region: getVal(row, 'אזור') || '',
-      weekday, date,
-      plan: (getVal(row, 'תכנון')||'').trim() || null,
+
+    // Skip pure spacer rows (no date, no region, no plan text at all).
+    if(!date && !regionRaw && !planText) return;
+
+    const item = {
+      plan: planText || null,
       cost: (getVal(row, 'מחיר')||'').trim(),
       hours: (getVal(row, 'שעות פתיחה')||'').trim(),
       address: (getVal(row, 'כתובת')||'').trim(),
       site: (getVal(row, 'אתר')||'').trim(),
       lodging: (getVal(row, 'לינה')||'').trim(),
-      extraNote: (getVal(row, 'הערות:')||getVal(row, 'הערות')||'').trim()
-    });
+      note: (getVal(row, 'הערות:')||getVal(row, 'הערות')||'').trim()
+    };
+
+    const last = days[days.length - 1];
+    // A row belongs to the same day as the previous one if it shares the same date
+    // (merged cells duplicate the date across every row in the block), or if it has
+    // no date at all (a genuine continuation / trailing note row).
+    const sameDay = last && (( date && date === last.date ) || (!date && !regionRaw));
+
+    if(sameDay){
+      last.items.push(item);
+      if(!last.region && regionRaw) last.region = regionRaw;
+    } else {
+      days.push({
+        region: regionRaw,
+        weekday, date,
+        items: [item]
+      });
+    }
   });
 
   // hero
@@ -767,13 +784,23 @@ function renderRouteAndDays(dayRows){
     groupEl.className = 'category';
     const color = `var(--${group.key})`;
     const cardsHtml = group.items.map(d => {
-      const tags = [];
-      if(d.cost) tags.push(`<span class="tag">💴 ${d.cost}</span>`);
-      if(d.hours) tags.push(`<span class="tag">🕐 ${d.hours}</span>`);
-      if(d.address) tags.push(`<a class="tag" href="${addressToMapsLink(d.address)}" target="_blank" rel="noopener">📍 ${d.address}</a>`);
-      if(d.lodging) tags.push(`<span class="tag">🛏 ${d.lodging}</span>`);
-      if(d.site) tags.push(`<a class="tag" href="${d.site}" target="_blank" rel="noopener">🔗 אתר</a>`);
       const isTransit = d.region.includes('>') || d.region.includes('→');
+      const validItems = d.items.filter(it => it.plan || it.cost || it.hours || it.address || it.site || it.note);
+      const itemsHtml = validItems.length ? validItems.map(it => {
+        const tags = [];
+        if(it.cost) tags.push(`<span class="tag">💴 ${it.cost}</span>`);
+        if(it.hours) tags.push(`<span class="tag">🕐 ${it.hours}</span>`);
+        if(it.address) tags.push(`<a class="tag" href="${addressToMapsLink(it.address)}" target="_blank" rel="noopener">📍 ${it.address}</a>`);
+        if(it.lodging) tags.push(`<span class="tag">🛏 ${it.lodging}</span>`);
+        if(it.site) tags.push(`<a class="tag" href="${it.site}" target="_blank" rel="noopener">🔗 אתר</a>`);
+        return `
+          <div class="plan-item">
+            ${it.plan ? `<div class="plan">${it.plan}</div>` : ''}
+            ${tags.length ? `<div class="meta-row" style="margin-top:6px;">${tags.join('')}</div>` : ''}
+            ${it.note ? `<div class="note">${it.note}</div>` : ''}
+          </div>
+        `;
+      }).join('') : `<div class="plan empty">${isTransit ? 'יום מעבר' : 'עדיין לא תוכנן — מקום פנוי לתכנון'}</div>`;
       return `
         <div class="day-card" id="day-${d.index}" style="--region-color:${regionColor(d.region)}">
           <div class="day-meta">
@@ -781,11 +808,7 @@ function renderRouteAndDays(dayRows){
             <div class="weekday">${d.weekday}</div>
             <div class="region-tag">${d.region}</div>
           </div>
-          <div class="day-body">
-            <div class="plan ${d.plan ? '' : 'empty'}">${d.plan ? d.plan : (isTransit ? 'יום מעבר' : 'עדיין לא תוכנן — מקום פנוי לתכנון')}</div>
-            ${tags.length ? `<div class="meta-row" style="margin-top:8px;">${tags.join('')}</div>` : ''}
-            ${d.extraNote ? `<div class="note">${d.extraNote}</div>` : ''}
-          </div>
+          <div class="day-body">${itemsHtml}</div>
         </div>
       `;
     }).join('');
@@ -806,13 +829,6 @@ function renderRouteAndDays(dayRows){
     daysContainer.appendChild(groupEl);
   });
 
-  if(closingNote){
-    const note = document.createElement('div');
-    note.className = 'empty-state';
-    note.style.marginTop = '4px';
-    note.innerHTML = `<strong>לקראת הסוף</strong>${closingNote}`;
-    daysContainer.appendChild(note);
-  }
 }
 
 // Clicking a route-line station expands the day's group (if collapsed) before scrolling to it.
