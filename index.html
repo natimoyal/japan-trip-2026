@@ -929,7 +929,7 @@ function renderMapAndAttractions(mapRows, attractionRows){
     if(!name) return;
     const cat = (getVal(row, 'קטגוריה')||'ללא קטגוריה').trim();
     if(!groups[cat]){ groups[cat] = []; order.push(cat); }
-    groups[cat].push({ name, place: (getVal(row, 'Place')||'').trim() });
+    groups[cat].push({ name, place: (getVal(row, 'Place')||'').trim(), desc: (getVal(row, 'תיאור')||'').trim() });
   });
 
   const catContainer = document.getElementById('categoriesContainer');
@@ -958,6 +958,7 @@ function renderMapAndAttractions(mapRows, attractionRows){
             ${hours ? `<span class="tag">${hours}</span>` : ''}
           </div>` : ''}
           ${note ? `<div class="note">${note}</div>` : ''}
+          ${it.desc ? `<button type="button" class="info-toggle">✨ עוד פרטים</button><div class="info-desc" hidden>${it.desc}</div>` : ''}
           <a class="open-link" target="_blank" rel="noopener" href="${link}">פתיחה במפות ←</a>
         </div>
       `;
