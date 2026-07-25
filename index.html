@@ -1115,19 +1115,21 @@ function renderRestaurants(rows){
     groups[region].push(r);
   });
 
-  // unique values for the two filters, in first-seen order
-  const neighborhoods = [], types = [];
+  // unique values for the three filters, in first-seen order
+  const neighborhoods = [], types = [], priceLevels = [];
   valid.forEach(r => {
     const n = (getVal(r,'שכונה')||'').trim();
     const t = (getVal(r,'סוג מסעדה')||'').trim();
+    const p = (getVal(r,'רמת מחיר')||'').trim();
     if(n && !neighborhoods.includes(n)) neighborhoods.push(n);
     if(t && !types.includes(t)) types.push(t);
+    if(p && !priceLevels.includes(p)) priceLevels.push(p);
   });
 
   const wrap = document.createElement('div');
   wrap.className = 'dynamic-restaurants-area';
 
-  if(neighborhoods.length || types.length){
+  if(neighborhoods.length || types.length || priceLevels.length){
     const filterBar = document.createElement('div');
     filterBar.className = 'restaurant-filters';
     filterBar.innerHTML = `
@@ -1141,6 +1143,11 @@ function renderRestaurants(rows){
           <option value="">כל סוגי המסעדות</option>
           ${types.map(t => `<option value="${t}">${t}</option>`).join('')}
         </select>` : ''}
+      ${priceLevels.length ? `
+        <select id="filterPrice">
+          <option value="">כל רמות המחיר</option>
+          ${priceLevels.map(p => `<option value="${p}">${p}</option>`).join('')}
+        </select>` : ''}
     `;
     wrap.appendChild(filterBar);
   }
@@ -1153,14 +1160,22 @@ function renderRestaurants(rows){
     const cardsHtml = items.map(r => {
       const neighborhood = (getVal(r,'שכונה')||'').trim();
       const type = (getVal(r,'סוג מסעדה')||'').trim();
+      const price = (getVal(r,'רמת מחיר')||'').trim();
+      const trapRaw = (getVal(r,'הסיכוי למלכודת תיירים')||'').trim();
+      let trapColor = 'var(--ink-soft)';
+      if(trapRaw.startsWith('נמוך')) trapColor = 'var(--moss)';
+      else if(trapRaw.startsWith('בינוני')) trapColor = 'var(--amber)';
+      else if(trapRaw.startsWith('גבוה')) trapColor = 'var(--vermilion)';
       return `
-      <div class="place-card" data-neighborhood="${neighborhood}" data-type="${type}" style="--cat-color:${color}">
+      <div class="place-card" data-neighborhood="${neighborhood}" data-type="${type}" data-price="${price}" style="--cat-color:${color}">
         <div class="name">${getVal(r, 'שם')}</div>
         <div class="meta-row">
           ${type ? `<span class="tag">🍽 ${type}</span>` : ''}
           ${neighborhood ? `<span class="tag">📌 ${neighborhood}</span>` : ''}
+          ${price ? `<span class="tag">💰 ${price}</span>` : ''}
           ${getVal(r, 'שעות פתיחה') ? `<span class="tag">${getVal(r, 'שעות פתיחה')}</span>` : ''}
         </div>
+        ${trapRaw ? `<div class="meta-row" style="margin-top:4px;"><span class="tag" style="background:${trapColor};color:#fff;">🎭 ${trapRaw}</span></div>` : ''}
         ${getVal(r, 'כתובת') ? `<a class="note" style="display:block;text-decoration:none;" target="_blank" rel="noopener" href="${addressToMapsLink(getVal(r, 'כתובת'))}">📍 ${getVal(r, 'כתובת')}</a>` : ''}
         ${getVal(r, 'הערות') ? `<div class="note">${getVal(r, 'הערות')}</div>` : ''}
         ${getVal(r, 'קישור') ? `<a class="open-link" target="_blank" rel="noopener" href="${fixMapsLink(getVal(r, 'קישור'))}">קישור ←</a>` : ''}
@@ -1191,16 +1206,19 @@ function renderRestaurants(rows){
   function applyFilters(){
     const nSel = document.getElementById('filterNeighborhood');
     const tSel = document.getElementById('filterType');
+    const pSel = document.getElementById('filterPrice');
     const nVal = nSel ? nSel.value : '';
     const tVal = tSel ? tSel.value : '';
+    const pVal = pSel ? pSel.value : '';
     wrap.querySelectorAll('.place-card').forEach(card => {
       const matchN = !nVal || card.dataset.neighborhood === nVal;
       const matchT = !tVal || card.dataset.type === tVal;
-      card.style.display = (matchN && matchT) ? '' : 'none';
+      const matchP = !pVal || card.dataset.price === pVal;
+      card.style.display = (matchN && matchT && matchP) ? '' : 'none';
     });
     // auto-expand every category while a filter is active, so matches aren't hidden inside a collapsed group
     wrap.querySelectorAll('.category').forEach(cat => {
-      if(nVal || tVal){
+      if(nVal || tVal || pVal){
         cat.classList.add('is-open');
         const btn = cat.querySelector('.category-title');
         if(btn) btn.setAttribute('aria-expanded', 'true');
@@ -1209,8 +1227,10 @@ function renderRestaurants(rows){
   }
   const nSel = document.getElementById('filterNeighborhood');
   const tSel = document.getElementById('filterType');
+  const pSel = document.getElementById('filterPrice');
   if(nSel) nSel.addEventListener('change', applyFilters);
   if(tSel) tSel.addEventListener('change', applyFilters);
+  if(pSel) pSel.addEventListener('change', applyFilters);
 }
 
 // ============ INIT ============
