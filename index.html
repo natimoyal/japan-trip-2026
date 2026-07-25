@@ -507,6 +507,14 @@
     </div>
   </section>
 
+  <section class="block" id="klook-section">
+    <div class="block-head">
+      <div class="kicker">Book ahead</div>
+      <h2>להזמין מראש (Klook)</h2>
+    </div>
+    <div id="klookContainer"></div>
+  </section>
+
   <footer>נבנה עבור טיול משפחת מויאל ליפן · ספטמבר–אוקטובר 2026</footer>
 
 <script>
@@ -516,7 +524,8 @@ const GIDS = {
   days: '1192019812',
   attractions: '343562278',
   map: '60108385',
-  restaurants: '1266147229'
+  restaurants: '1266147229',
+  klook: '470006124'
 };
 function csvUrl(gid){
   return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&_=${Date.now()}`;
@@ -1007,6 +1016,72 @@ function addressToMapsLink(text){
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}`;
 }
 
+function renderKlook(rows){
+  const container = document.getElementById('klookContainer');
+  container.innerHTML = '';
+  const valid = rows.filter(r => (getVal(r, 'פריט')||'').trim());
+  if(!valid.length){
+    container.innerHTML = `<div class="empty-state"><strong>אין עדיין פריטים</strong>הוסיפו שורות בטאב "להזמין מראש (Klook)" והם יופיעו כאן אוטומטית.</div>`;
+    return;
+  }
+
+  const order = [];
+  const groups = {};
+  valid.forEach(r => {
+    const cat = (getVal(r, 'קטגוריה')||'ללא קטגוריה').trim() || 'ללא קטגוריה';
+    if(!groups[cat]){ groups[cat] = []; order.push(cat); }
+    groups[cat].push(r);
+  });
+
+  order.forEach(cat => {
+    const items = groups[cat];
+    const bookedCount = items.filter(r => {
+      const s = (getVal(r,'סטטוס הזמנה')||'').trim();
+      return s && !s.includes('לא');
+    }).length;
+    const catEl = document.createElement('div');
+    catEl.className = 'category';
+    const cardsHtml = items.map(r => {
+      const status = (getVal(r,'סטטוס הזמנה')||'').trim();
+      const isBooked = status && !status.includes('לא');
+      const statusColor = isBooked ? 'var(--moss)' : 'var(--vermilion)';
+      const link = (getVal(r,'קישור (חיפוש בקלוק)')||getVal(r,'קישור')||'').trim();
+      const city = (getVal(r,'עיר / מיקום')||'').trim();
+      const deadline = (getVal(r,'תאריך יעד להזמנה')||'').trim();
+      const price = (getVal(r,'מחיר משוער לאדם')||'').trim();
+      const note = (getVal(r,'הערות')||'').trim();
+      return `
+        <div class="place-card" style="--cat-color:var(--gold)">
+          <div class="name">${getVal(r,'פריט')}</div>
+          <div class="meta-row">
+            <span class="tag" style="background:${statusColor};color:#fff;">${status || 'לא ידוע'}</span>
+            ${city ? `<span class="tag">📍 ${city}</span>` : ''}
+            ${deadline ? `<span class="tag">⏰ ${deadline}</span>` : ''}
+            ${price ? `<span class="tag">💴 ${price}</span>` : ''}
+          </div>
+          ${note ? `<div class="note">${note}</div>` : ''}
+          ${link ? `<a class="open-link" target="_blank" rel="noopener" href="${link}">הזמנה בקלוק ←</a>` : ''}
+        </div>
+      `;
+    }).join('');
+    catEl.innerHTML = `
+      <button type="button" class="category-title" aria-expanded="false">
+        <span class="cat-dot" style="background:var(--gold)"></span>${cat} · ${bookedCount}/${items.length} הוזמנו
+        <span class="chev">▾</span>
+      </button>
+      <div class="category-body">
+        <div class="cards-grid">${cardsHtml}</div>
+      </div>
+    `;
+    const titleBtn = catEl.querySelector('.category-title');
+    titleBtn.addEventListener('click', () => {
+      const isOpen = catEl.classList.toggle('is-open');
+      titleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    container.appendChild(catEl);
+  });
+}
+
 function renderRestaurants(rows){
   const section = document.getElementById('restaurants-section');
   const valid = rows.filter(r => (getVal(r, 'שם')||'').trim());
@@ -1066,15 +1141,17 @@ async function loadAll(){
   errEl.style.display = 'none';
   errEl.textContent = '';
   try{
-    const [days, attractions, map, restaurants] = await Promise.all([
+    const [days, attractions, map, restaurants, klook] = await Promise.all([
       fetchSheet(GIDS.days),
       fetchSheet(GIDS.attractions),
       fetchSheet(GIDS.map),
-      fetchSheet(GIDS.restaurants)
+      fetchSheet(GIDS.restaurants),
+      fetchSheet(GIDS.klook)
     ]);
     renderRouteAndDays(days);
     renderMapAndAttractions(map, attractions);
     renderRestaurants(restaurants);
+    renderKlook(klook);
   }catch(e){
     errEl.style.display = 'block';
     errEl.textContent = 'לא הצלחתי לטעון נתונים מהגיליון החי: ' + (e && e.message ? e.message : e) + ' — נסה לרענן, או ודא שהשיתוף מוגדר כ"כל מי שיש לו את הקישור – צפייה".';
