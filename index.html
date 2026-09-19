@@ -833,6 +833,9 @@ function renderRouteAndDays(dayRows){
   });
 
   // day cards — grouped into collapsible sections by region (same regionKey used for the route line)
+  window.__debugParsedDays = days;
+  console.log('%c[DEBUG] Days after date-based grouping:', 'color:#5F7A5F;font-weight:bold', days.length);
+  console.table(days.map(d => ({ region: d.region, weekday: d.weekday, date: d.date, itemCount: d.items.length })));
   const REGION_LABELS = { indigo:'טוקיו', fuji:"הר פוג'י", vermilion:'קיוטו', amber:'אוסקה' };
   let dayGroups = [];
   days.forEach((d, i) => {
@@ -1246,14 +1249,19 @@ async function loadAll(){
       fetchSheet(GIDS.restaurants),
       fetchSheet(GIDS.klook)
     ]);
+    console.log('%c[DEBUG] Raw parsed rows from "days" tab:', 'color:#1F3A5F;font-weight:bold', days.length);
+    console.log('[DEBUG] First 3 raw day rows:', days.slice(0,3));
+    console.log('[DEBUG] Last 3 raw day rows:', days.slice(-3));
+    window.__debugDayRows = days; // inspect anytime in console with: __debugDayRows
     renderRouteAndDays(days);
+    console.log('%c[DEBUG] Grouped days after parsing:', 'color:#C1440E;font-weight:bold', window.__debugParsedDays ? window.__debugParsedDays.length : 'n/a');
     renderMapAndAttractions(map, attractions);
     renderRestaurants(restaurants);
     renderKlook(klook);
   }catch(e){
     errEl.style.display = 'block';
     errEl.textContent = 'לא הצלחתי לטעון נתונים מהגיליון החי: ' + (e && e.message ? e.message : e) + ' — נסה לרענן, או ודא שהשיתוף מוגדר כ"כל מי שיש לו את הקישור – צפייה".';
-    console.error(e);
+    console.error('[DEBUG] loadAll threw:', e);
   }
 }
 document.getElementById('refreshBtn').addEventListener('click', loadAll);
