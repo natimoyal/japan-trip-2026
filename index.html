@@ -764,7 +764,11 @@ function renderRouteAndDays(dayRows){
     // A row belongs to the same day as the previous one if it shares the same date
     // (merged cells duplicate the date across every row in the block), or if it has
     // no date at all (a genuine continuation / trailing note row).
-    const sameDay = last && (( date && date === last.date ) || (!date && !regionRaw));
+    // A new day starts ONLY when a row carries a genuinely different date.
+    // A row with no date of its own (whether or not it happens to carry a region
+    // value — region and date merges can start on different rows) is always a
+    // continuation of whichever day came before it.
+    const sameDay = last && (!date || date === last.date);
 
     if(sameDay){
       const prevItem = last.items[last.items.length - 1];
