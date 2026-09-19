@@ -740,9 +740,10 @@ function renderRouteAndDays(dayRows){
     const yomRaw = getVal(row, 'יום') || '';
     const regionRaw = (getVal(row, 'אזור') || '').trim();
     const planText = (getVal(row, 'תכנון') || '').trim();
-    const parts = yomRaw.split('\n').map(s => s.trim()).filter(Boolean);
-    const weekday = parts[0] || '';
-    const date = parts[1] || '';
+    // Accepts "יום חמישי\n24/9" (newline) as well as "יום חמישי 24/9" or "24/9 יום חמישי" (space).
+    const dateMatch = yomRaw.match(/\d{1,2}\/\d{1,2}/);
+    const date = dateMatch ? dateMatch[0] : '';
+    const weekday = yomRaw.replace(date, '').replace(/[\n\r]+/g, ' ').trim();
 
     // Skip pure spacer rows (no date, no region, no plan text at all).
     if(!date && !regionRaw && !planText) return;
@@ -766,8 +767,15 @@ function renderRouteAndDays(dayRows){
     const sameDay = last && (( date && date === last.date ) || (!date && !regionRaw));
 
     if(sameDay){
-      last.items.push(item);
+      const prevItem = last.items[last.items.length - 1];
+      const isDuplicate = prevItem && item.plan && prevItem.plan === item.plan
+        && item.cost === prevItem.cost && item.hours === prevItem.hours;
+      if(!isDuplicate) last.items.push(item);
       if(!last.region && regionRaw) last.region = regionRaw;
+    } else if(!last && !date && !regionRaw){
+      // A stray row with no date/region shows up before any real day has started —
+      // don't invent a phantom blank day out of it; just drop it silently.
+      return;
     } else {
       days.push({
         region: regionRaw,
