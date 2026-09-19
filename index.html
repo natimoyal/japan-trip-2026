@@ -650,7 +650,12 @@ function parseCSV(text){
         else { inQuotes = false; }
       } else { field += c; }
     } else {
-      if(c === '"'){ inQuotes = true; }
+      // A quote only opens a quoted field when it's the very first character of
+      // that field — a stray quote appearing mid-field (common in rich prose:
+      // quotation marks, inch marks, nicknames in quotes) must NOT re-enter
+      // quoted mode, or the parser can swallow huge amounts of subsequent
+      // content (including real row/column boundaries) into one giant field.
+      if(c === '"' && field === ''){ inQuotes = true; }
       else if(c === ','){ row.push(field); field=''; }
       else if(c === '\r'){ /* skip */ }
       else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
